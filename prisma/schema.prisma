@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// CLIENT — the merchant using your CRM
+model Client {
+  id        Int           @id @default(autoincrement())
+  name      String
+  createdAt DateTime      @default(now())
+  members   Member[]
+  config    ClientConfig?
+}
+
+// CLIENT CONFIG — rules per merchant, no hardcoding
+model ClientConfig {
+  id             Int    @id @default(autoincrement())
+  clientId       Int    @unique
+  earnRate       Float  @default(1.0)
+  tierSilver     Int    @default(500)
+  tierGold       Int    @default(2000)
+  tierPlatinum   Int    @default(5000)
+  expiryDays     Int    @default(365)
+  pointsToRedeem Int    @default(500)
+  client         Client @relation(fields: [clientId], references: [id])
+}
+
+// MEMBER — the end customer
+model Member {
+  id           Int           @id @default(autoincrement())
+  clientId     Int
+  name         String
+  email        String
+  points       Int           @default(0)
+  tier         String        @default("Bronze")
+  createdAt    DateTime      @default(now())
+  client       Client        @relation(fields: [clientId], references: [id])
+  transactions Transaction[]
+  vouchers     Voucher[]
+}
+
+// TRANSACTION — every earn and redeem event
+model Transaction {
+  id            Int      @id @default(autoincrement())
+  memberId      Int
+  type          String
+  pointsBefore  Int
+  pointsAfter   Int
+  pointsChanged Int
+  createdAt     DateTime @default(now())
+  member        Member   @relation(fields: [memberId], references: [id])
+}
+
+// VOUCHER — issued to member on redemption
+model Voucher {
+  id         Int      @id @default(autoincrement())
+  memberId   Int
+  code       String   @unique
+  value      Float
+  status     String   @default("active")
+  expiryDate DateTime
+  createdAt  DateTime @default(now())
+  member     Member   @relation(fields: [memberId], references: [id])
+}
