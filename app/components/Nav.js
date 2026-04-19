@@ -26,11 +26,15 @@ export default function Nav() {
       {/* Inner wrapper: centres content and adds horizontal padding */}
       <div className="max-w-5xl mx-auto px-6 flex items-center gap-6 h-14">
         {NAV_LINKS.map(({ href, label }) => {
-          // A link is "active" when its href matches the current page path.
-          // The "/" home link only matches exactly to avoid highlighting it
-          // on every page.
+          // Exact match for "/" and "/members/new".
+          // "/members" also activates on detail pages like "/members/123",
+          // but must NOT activate on "/members/new" (that belongs to Add Member).
           const isActive =
-            href === "/" ? pathname === "/" : pathname.startsWith(href);
+            href === "/members"
+              ? pathname === "/members" ||
+                (pathname.startsWith("/members/") &&
+                  pathname !== "/members/new")
+              : pathname === href;
 
           return (
             <Link
