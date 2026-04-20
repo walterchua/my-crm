@@ -34,7 +34,7 @@ model Member {
   id           Int           @id @default(autoincrement())
   clientId     Int
   name         String
-  email        String
+  email        String        @unique
   points       Int           @default(0)
   tier         String        @default("Bronze")
   createdAt    DateTime      @default(now())

@@ -20,14 +20,30 @@ transactions across multiple independent merchant clients.
 This is a learning project but designed with production
 architecture patterns from the start.
 
-## Tech Stack
+## Tech Stack — Always Use These
 - Framework: Next.js 16 (App Router, JavaScript not TypeScript)
-- Database: Supabase (PostgreSQL)
-- ORM: Prisma
+- Database: Supabase (PostgreSQL, Singapore region)
+- ORM: Prisma 5.22.0
 - Styling: Tailwind CSS
 - Testing: Vitest
 - Deployment: Vercel
 - Version Control: GitHub
+
+## Project Location
+- Local: C:\Projects\my-crm
+- GitHub: github.com/walterchua/my-crm
+- Database: Supabase project mykxhdflzjutsxuhrbga
+
+## Database Schema
+- Schema file: prisma/schema.prisma
+- Always read this file before writing any Prisma queries
+- 5 models: Client, ClientConfig, Member, Transaction, Voucher
+- Every query must be scoped by clientId — never unscoped 
+- Always read prisma/schema.prisma before writing any code.
+
+## Seed Data
+- Demo client: Demo Coffee Shop, clientId: 1
+- Members: Walter Yu (Gold, 1250pts), John Tan (Silver, 320pts)
 
 ## Architecture Rules — Always Follow These
 1. Every database query MUST be scoped by clientId
@@ -53,9 +69,54 @@ architecture patterns from the start.
 6. Always validate on the API side
    - Never trust frontend validation alone
    - Zod for request body validation
+   - Use res.ok to detect errors, not just catch block
 
-## Database Models
-- Client (merchant using the platform)
-- ClientConfig (earn rates, tier thresholds, expiry rules per client)
-- Member (end customer belonging to a client)
-- Transaction (earn and re
+## API Response Conventions
+- GET success → always 200
+- POST that creates a record → always 201
+- DELETE success → always 204
+- PUT/PATCH success → always 200
+- Validation failure → always 400
+- Duplicate record → always 409
+- Not found → always 404
+- Unexpected error → always 500
+- Never return 200 for a POST that creates — always 201
+
+## Prisma Error Handling
+- P2002 unique constraint → 409
+- P2025 record not found → 404
+- P2003 foreign key fail → 400
+- Unknown Prisma error → 500
+
+## API Response Shape
+- Errors always return: { error: "human readable message" }
+- Success always returns the created/updated record
+- Never return raw Prisma errors to the user
+- Always log real errors with console.error before returning 500
+
+## File Conventions
+- All files use .js not .tsx or .ts
+- Components go in app/components/
+- Pure logic functions go in lib/
+- Tests go in __tests__/ and end in .test.js
+- No TypeScript — JavaScript only throughout
+
+## Styling Rules
+- Tailwind CSS only — no inline styles, no CSS modules
+- Dark theme throughout — bg-gray-900 surface, bg-gray-950 page background
+- No external component libraries — build from scratch with Tailwind
+
+## Routing Conventions
+- / → Dashboard
+- /members → Members list
+- /members/new → Registration form
+- /members/[id] → Member detail
+- /api/members → GET all, POST create
+- /api/members/[id] → GET one, PUT update, DELETE
+
+## Testing Rules
+- Pure logic functions in lib/ must have unit tests
+- Tests follow Arrange-Act-Assert pattern
+- Always test: happy path, boundary condition, error case
+- Never test UI styling or static content
+- Run npx vitest run before every commit
