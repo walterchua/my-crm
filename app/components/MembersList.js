@@ -99,13 +99,16 @@ export default function MembersList({ clients }) {
           <p className="text-red-400 text-sm">{error}</p>
         )}
 
-        {/* Member list */}
+        {/* Member list — each card links to the detail page with clientId in the URL */}
         {!loading && !error && members.length > 0 && (
           <div className="grid gap-3">
             {members.map(member => (
-              <div
+              // Entire card is a link — clientId is passed so the detail page
+              // can scope the database query and prevent cross-client access
+              <Link
                 key={member.id}
-                className="bg-gray-900 border border-gray-800 rounded-xl px-6 py-4 flex justify-between items-center"
+                href={`/members/${member.id}?clientId=${selectedClientId}`}
+                className="bg-gray-900 border border-gray-800 rounded-xl px-6 py-4 flex justify-between items-center hover:border-gray-600 hover:bg-gray-800 transition-colors"
               >
                 <div>
                   <p className="text-white font-medium">{member.name}</p>
@@ -121,16 +124,9 @@ export default function MembersList({ clients }) {
                       {member.points.toLocaleString()} pts
                     </p>
                   </div>
-
-                  {/* Link to member detail page */}
-                  <Link
-                    href={`/members/${member.id}`}
-                    className="text-gray-400 hover:text-white text-sm transition-colors"
-                  >
-                    View →
-                  </Link>
+                  <span className="text-gray-500 text-sm">→</span>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
