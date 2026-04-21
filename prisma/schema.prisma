@@ -9,7 +9,7 @@ datasource db {
 
 // CLIENT — the merchant using your CRM
 model Client {
-  id        Int           @id @default(autoincrement())
+  id        String        @id @default(cuid())
   name      String
   createdAt DateTime      @default(now())
   members   Member[]
@@ -19,7 +19,7 @@ model Client {
 // CLIENT CONFIG — rules per merchant, no hardcoding
 model ClientConfig {
   id             Int    @id @default(autoincrement())
-  clientId       Int    @unique
+  clientId       String @unique
   earnRate       Float  @default(1.0)
   tierSilver     Int    @default(500)
   tierGold       Int    @default(2000)
@@ -31,8 +31,8 @@ model ClientConfig {
 
 // MEMBER — the end customer
 model Member {
-  id           Int           @id @default(autoincrement())
-  clientId     Int
+  id           String        @id @default(cuid())
+  clientId     String
   name         String
   email        String        @unique
   points       Int           @default(0)
@@ -46,7 +46,7 @@ model Member {
 // TRANSACTION — every earn and redeem event
 model Transaction {
   id            Int      @id @default(autoincrement())
-  memberId      Int
+  memberId      String
   type          String
   pointsBefore  Int
   pointsAfter   Int
@@ -58,7 +58,7 @@ model Transaction {
 // VOUCHER — issued to member on redemption
 model Voucher {
   id         Int      @id @default(autoincrement())
-  memberId   Int
+  memberId   String
   code       String   @unique
   value      Float
   status     String   @default("active")

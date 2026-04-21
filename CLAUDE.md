@@ -42,8 +42,9 @@ architecture patterns from the start.
 - Always read prisma/schema.prisma before writing any code.
 
 ## Seed Data
-- Demo client: Demo Coffee Shop, clientId: 1
+- Demo client: Demo Coffee Shop (cuid string ID — read from DB)
 - Members: Walter Yu (Gold, 1250pts), John Tan (Silver, 320pts)
+- Never hardcode clientId — always read from database or env
 
 ## Architecture Rules — Always Follow These
 1. Every database query MUST be scoped by clientId

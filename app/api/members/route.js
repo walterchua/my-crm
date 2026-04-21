@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { prisma } from '../../../lib/prisma'
 
 // POST /api/members — register a new member
 export async function POST(request) {
@@ -29,7 +27,7 @@ export async function POST(request) {
     })
     return Response.json(member, { status: 201 })
   } catch (error) {
-    // P2002 — unique constraint violation (duplicate email/phone)
+    // P2002 — unique constraint violation (duplicate email)
     if (error.code === 'P2002') {
       return Response.json(
         { error: 'Email already registered' },
@@ -44,11 +42,22 @@ export async function POST(request) {
   }
 }
 
-// GET /api/members — fetch all members
-export async function GET() {
+// GET /api/members?clientId=xxx — fetch all members for a client
+export async function GET(request) {
+  const { searchParams } = new URL(request.url)
+  const clientId = searchParams.get('clientId')
+
+  if (!clientId) {
+    return Response.json(
+      { error: 'Missing required query parameter: clientId' },
+      { status: 400 }
+    )
+  }
+
   try {
     const members = await prisma.member.findMany({
-      orderBy: { createdAt: 'desc' }
+      where: { clientId },
+      orderBy: { createdAt: 'desc' },
     })
     return Response.json(members)
   } catch (error) {
