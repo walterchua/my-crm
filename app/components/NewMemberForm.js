@@ -1,12 +1,16 @@
 'use client'
 
-// This is the interactive part of the registration page.
-// It receives clientId as a prop from the Server Component wrapper (page.js),
-// so it never needs to hardcode or fetch it itself.
 import { useState } from 'react'
 import Link from 'next/link'
+import { useClient } from '../context/ClientContext'
 
-export default function NewMemberForm({ clientId }) {
+// NewMemberForm no longer receives clientId as a prop.
+// It reads the selected client directly from context — the same
+// client the user selected in the nav bar.
+export default function NewMemberForm() {
+  // selectedClient is { id, name } — set by the nav selector
+  const { selectedClient } = useClient()
+
   const [name,            setName]            = useState('')
   const [email,           setEmail]           = useState('')
   const [validationError, setValidationError] = useState('')
@@ -31,16 +35,25 @@ export default function NewMemberForm({ clientId }) {
       setValidationError('Missing mandatory input: email')
       return
     }
+    // Guard against the context not yet having a client (rare race condition
+    // if the user lands here before the initial fetch completes)
+    if (!selectedClient?.id) {
+      setValidationError('No client selected — please select one from the nav bar')
+      return
+    }
 
     setLoading(true)
 
     try {
-      // clientId comes from props — it is the real cuid from the database,
-      // fetched server-side before this component ever mounted
+      // clientId comes from context — the globally selected client
       const response = await fetch('/api/members', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ name: name.trim(), email: email.trim(), clientId }),
+        body:    JSON.stringify({
+          name:     name.trim(),
+          email:    email.trim(),
+          clientId: selectedClient.id,
+        }),
       })
 
       const data = await response.json()
@@ -72,7 +85,14 @@ export default function NewMemberForm({ clientId }) {
           ← Back to Members
         </Link>
 
-        <h1 className="text-3xl font-bold text-white mb-8">Register New Member</h1>
+        <h1 className="text-3xl font-bold text-white mb-1">Register New Member</h1>
+
+        {/* Show which client the member will be registered under */}
+        {selectedClient && (
+          <p className="text-gray-400 text-sm mb-8">
+            Registering for: {selectedClient.name}
+          </p>
+        )}
 
         <form onSubmit={handleSubmit} className="bg-gray-900 rounded-xl p-6 space-y-5">
 

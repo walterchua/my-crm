@@ -1,13 +1,8 @@
-// Server Component — fetches all clients from the database before the page loads.
-// Passes them to MembersList so the client dropdown is ready immediately,
-// with no loading state needed for the selector itself.
-import { prisma } from '../../lib/prisma'
+// Server Component — no data fetching needed here anymore.
+// The selected client now lives in ClientContext (populated in the nav).
+// MembersList reads it directly from context, so this page just renders it.
 import MembersList from '../components/MembersList'
 
-export default async function MembersPage() {
-  const clients = await prisma.client.findMany({
-    orderBy: { createdAt: 'asc' },
-  })
-
-  return <MembersList clients={clients} />
+export default function MembersPage() {
+  return <MembersList />
 }

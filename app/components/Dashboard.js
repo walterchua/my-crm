@@ -1,30 +1,29 @@
 'use client'
 
-// useEffect runs code after the component renders in the browser.
-// useState holds values that, when changed, cause the component to re-render.
 import { useEffect, useState } from 'react'
+import { useClient } from '../context/ClientContext'
 
-export default function Dashboard({ clients }) {
-  // Track which client is selected — default to the first one in the list
-  const [selectedClientId, setSelectedClientId] = useState(
-    clients[0]?.id ?? null
-  )
+export default function Dashboard() {
+  // Read the globally selected client from context.
+  // When the user changes the nav selector, selectedClient updates here
+  // automatically — no prop drilling needed.
+  const { selectedClient, clients } = useClient()
 
   // Members fetched for the selected client
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(false)
-  const [error, setError]     = useState('')
+  const [error,   setError]   = useState('')
 
-  // Fetch members whenever the selected client changes
+  // Re-fetch members whenever the selected client changes
   useEffect(() => {
-    if (!selectedClientId) return
+    if (!selectedClient?.id) return
 
     async function fetchMembers() {
       setLoading(true)
       setError('')
 
       try {
-        const res = await fetch(`/api/members?clientId=${selectedClientId}`)
+        const res  = await fetch(`/api/members?clientId=${selectedClient.id}`)
         const data = await res.json()
 
         if (!res.ok) {
@@ -43,7 +42,7 @@ export default function Dashboard({ clients }) {
     }
 
     fetchMembers()
-  }, [selectedClientId])
+  }, [selectedClient?.id])
 
   // Derive summary stats from the current member list
   const totalPoints = members.reduce((sum, m) => sum + m.points, 0)
@@ -52,47 +51,27 @@ export default function Dashboard({ clients }) {
     return acc
   }, {})
 
-  // The full name of whichever client is currently selected
-  const selectedClient = clients.find(c => c.id === selectedClientId)
-
   return (
     <main className="min-h-screen bg-gray-950 p-8">
       <div className="max-w-5xl mx-auto space-y-8">
 
-        {/* Header row */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        {/* Page heading — client name shown in subtitle so context is clear */}
+        <div>
           <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-
-          {/* Client selector dropdown */}
-          <div className="flex items-center gap-3">
-            <label
-              htmlFor="client-select"
-              className="text-sm text-gray-400 whitespace-nowrap"
-            >
-              Viewing client:
-            </label>
-            <select
-              id="client-select"
-              value={selectedClientId ?? ''}
-              onChange={e => setSelectedClientId(e.target.value)}
-              className="bg-gray-800 text-white border border-gray-600 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {clients.map(client => (
-                <option key={client.id} value={client.id}>
-                  {client.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          {selectedClient && (
+            <p className="text-gray-400 text-sm mt-1">
+              Viewing: {selectedClient.name}
+            </p>
+          )}
         </div>
 
-        {/* No clients at all */}
+        {/* No clients at all — shown while context is still loading */}
         {clients.length === 0 && (
-          <p className="text-gray-400">No clients found. Run the seed to add demo data.</p>
+          <p className="text-gray-400">Loading clients…</p>
         )}
 
-        {/* Summary stat cards */}
-        {!loading && !error && members.length >= 0 && selectedClient && (
+        {/* Summary stat cards — only shown once a client is selected */}
+        {!loading && !error && selectedClient && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <StatCard label="Total Members" value={members.length} />
             <StatCard label="Total Points"  value={totalPoints.toLocaleString()} />
@@ -104,6 +83,12 @@ export default function Dashboard({ clients }) {
             />
           </div>
         )}
+
+        {/* Loading state */}
+        {loading && <p className="text-gray-400 text-sm">Loading…</p>}
+
+        {/* Error state */}
+        {error && <p className="text-red-400 text-sm">{error}</p>}
 
       </div>
     </main>

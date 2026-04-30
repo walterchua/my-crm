@@ -27,10 +27,10 @@ export async function POST(request) {
     })
     return Response.json(member, { status: 201 })
   } catch (error) {
-    // P2002 — unique constraint violation (duplicate email)
+    // P2002 — composite unique constraint violation (duplicate email within this client)
     if (error.code === 'P2002') {
       return Response.json(
-        { error: 'Email already registered' },
+        { error: 'Email already registered for this client' },
         { status: 409 }
       )
     }

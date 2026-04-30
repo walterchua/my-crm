@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useClient } from '../context/ClientContext'
 
 // Tier badge colours — matches the Dashboard component
 const TIER_STYLES = {
@@ -11,25 +12,27 @@ const TIER_STYLES = {
   Platinum: 'bg-sky-900     text-sky-300',
 }
 
-export default function MembersList({ clients }) {
-  // Default to the first client in the list
-  const [selectedClientId, setSelectedClientId] = useState(
-    clients[0]?.id ?? null
-  )
-  const [members,  setMembers]  = useState([])
-  const [loading,  setLoading]  = useState(false)
-  const [error,    setError]    = useState('')
+// MembersList no longer receives `clients` as a prop.
+// It reads the selected client directly from context, so the
+// selection persists when the user navigates away and comes back.
+export default function MembersList() {
+  // selectedClient comes from the nav selector — { id, name }
+  const { selectedClient, clients } = useClient()
+
+  const [members, setMembers] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [error,   setError]   = useState('')
 
   // Fetch members whenever the selected client changes
   useEffect(() => {
-    if (!selectedClientId) return
+    if (!selectedClient?.id) return
 
     async function fetchMembers() {
       setLoading(true)
       setError('')
 
       try {
-        const res  = await fetch(`/api/members?clientId=${selectedClientId}`)
+        const res  = await fetch(`/api/members?clientId=${selectedClient.id}`)
         const data = await res.json()
 
         if (!res.ok) {
@@ -48,66 +51,50 @@ export default function MembersList({ clients }) {
     }
 
     fetchMembers()
-  }, [selectedClientId])
+  }, [selectedClient?.id])
 
   return (
     <main className="min-h-screen bg-gray-950 p-8">
       <div className="max-w-5xl mx-auto space-y-8">
 
-        {/* Header row */}
+        {/* Header row — client name shown as subtitle, action button on the right */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h1 className="text-3xl font-bold text-white">Members</h1>
-
-          <div className="flex items-center gap-3">
-            {/* Client selector */}
-            <label
-              htmlFor="client-select"
-              className="text-sm text-gray-400 whitespace-nowrap"
-            >
-              Viewing client:
-            </label>
-            <select
-              id="client-select"
-              value={selectedClientId ?? ''}
-              onChange={e => setSelectedClientId(e.target.value)}
-              className="bg-gray-800 text-white border border-gray-600 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {clients.map(client => (
-                <option key={client.id} value={client.id}>
-                  {client.name}
-                </option>
-              ))}
-            </select>
-
-            {/* Add member button */}
-            <Link
-              href="/members/new"
-              className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
-            >
-              + Add Member
-            </Link>
+          <div>
+            <h1 className="text-3xl font-bold text-white">Members</h1>
+            {selectedClient && (
+              <p className="text-gray-400 text-sm mt-1">
+                Viewing: {selectedClient.name}
+              </p>
+            )}
           </div>
+
+          <Link
+            href="/members/new"
+            className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors whitespace-nowrap self-start sm:self-auto"
+          >
+            + Add Member
+          </Link>
         </div>
 
-        {/* Loading */}
+        {/* Loading state */}
         {loading && (
           <p className="text-gray-400 text-sm">Loading members...</p>
         )}
 
-        {/* Error */}
+        {/* Error state */}
         {error && (
           <p className="text-red-400 text-sm">{error}</p>
         )}
 
-        {/* Member list — each card links to the detail page with clientId in the URL */}
+        {/* Member list — each card links to the detail page.
+            clientId is passed in the URL so the detail page can scope
+            its database query and prevent cross-client access. */}
         {!loading && !error && members.length > 0 && (
           <div className="grid gap-3">
             {members.map(member => (
-              // Entire card is a link — clientId is passed so the detail page
-              // can scope the database query and prevent cross-client access
               <Link
                 key={member.id}
-                href={`/members/${member.id}?clientId=${selectedClientId}`}
+                href={`/members/${member.id}?clientId=${selectedClient.id}`}
                 className="bg-gray-900 border border-gray-800 rounded-xl px-6 py-4 flex justify-between items-center hover:border-gray-600 hover:bg-gray-800 transition-colors"
               >
                 <div>
@@ -131,8 +118,8 @@ export default function MembersList({ clients }) {
           </div>
         )}
 
-        {/* Empty state */}
-        {!loading && !error && members.length === 0 && selectedClientId && (
+        {/* Empty state — shown when a client is selected but has no members */}
+        {!loading && !error && members.length === 0 && selectedClient && (
           <div className="text-center py-16">
             <p className="text-gray-500 mb-4">No members yet for this client.</p>
             <Link
@@ -144,9 +131,9 @@ export default function MembersList({ clients }) {
           </div>
         )}
 
-        {/* No clients */}
+        {/* No clients loaded yet — context is still fetching */}
         {clients.length === 0 && (
-          <p className="text-gray-400">No clients found. Run the seed to add demo data.</p>
+          <p className="text-gray-400 text-sm">Loading clients…</p>
         )}
 
       </div>

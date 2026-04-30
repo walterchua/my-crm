@@ -1,7 +1,9 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-// Nav is a client component — safe to import into a Server Component layout
 import Nav from "./components/Nav";
+// ClientProviderWrapper carries the "use client" boundary so this
+// file can remain a Server Component (required for metadata + fonts)
+import ClientProviderWrapper from "./components/ClientProviderWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,10 +30,13 @@ export default function RootLayout({ children }) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      {/* Nav renders above every page's content */}
+      {/* ClientProviderWrapper makes the selected client available to
+          every component in the tree. Nav and all pages read from it. */}
       <body className="min-h-full flex flex-col">
-        <Nav />
-        {children}
+        <ClientProviderWrapper>
+          <Nav />
+          {children}
+        </ClientProviderWrapper>
       </body>
     </html>
   );

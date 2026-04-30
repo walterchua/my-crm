@@ -1,13 +1,8 @@
-// Server Component — fetches all clients from the database before the page loads.
-// Passes them to the Dashboard client component as props so the dropdown
-// is populated without any client-side loading state.
-import { prisma } from '../lib/prisma'
+// Server Component — no data fetching needed here anymore.
+// The selected client now lives in ClientContext (populated in the nav).
+// Dashboard reads it directly from context, so this page just renders it.
 import Dashboard from './components/Dashboard'
 
-export default async function HomePage() {
-  const clients = await prisma.client.findMany({
-    orderBy: { createdAt: 'asc' },
-  })
-
-  return <Dashboard clients={clients} />
+export default function HomePage() {
+  return <Dashboard />
 }

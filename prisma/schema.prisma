@@ -33,13 +33,17 @@ model Member {
   id           String        @id @default(cuid())
   clientId     String
   name         String
-  email        String        @unique
+  email        String
   points       Int           @default(0)
   tier         String        @default("Bronze")
   createdAt    DateTime      @default(now())
   client       Client        @relation(fields: [clientId], references: [id])
   transactions Transaction[]
   vouchers     Voucher[]
+
+  // email must be unique per client, not globally —
+  // the same person can be a member of multiple merchants
+  @@unique([clientId, email])
 }
 
 // TRANSACTION — every earn and redeem event
