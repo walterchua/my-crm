@@ -6,10 +6,9 @@ import { useClient } from '../context/ClientContext'
 
 // Tier badge colours — matches the Dashboard component
 const TIER_STYLES = {
-  Bronze:   'bg-orange-900  text-orange-300',
-  Silver:   'bg-gray-700    text-gray-200',
-  Gold:     'bg-yellow-900  text-yellow-300',
-  Platinum: 'bg-sky-900     text-sky-300',
+  Bronze: 'bg-orange-900 text-orange-300',
+  Silver: 'bg-gray-700   text-gray-200',
+  Gold:   'bg-yellow-900 text-yellow-300',
 }
 
 // MembersList no longer receives `clients` as a prop.

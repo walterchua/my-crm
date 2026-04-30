@@ -72,14 +72,11 @@ export default function Dashboard() {
 
         {/* Summary stat cards — only shown once a client is selected */}
         {!loading && !error && selectedClient && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             <StatCard label="Total Members" value={members.length} />
             <StatCard label="Total Points"  value={totalPoints.toLocaleString()} />
-            <StatCard label="Gold / Platinum"
-              value={`${tierCounts.Gold ?? 0} / ${tierCounts.Platinum ?? 0}`}
-            />
-            <StatCard label="Bronze / Silver"
-              value={`${tierCounts.Bronze ?? 0} / ${tierCounts.Silver ?? 0}`}
+            <StatCard label="Gold / Silver / Bronze"
+              value={`${tierCounts.Gold ?? 0} / ${tierCounts.Silver ?? 0} / ${tierCounts.Bronze ?? 0}`}
             />
           </div>
         )}
