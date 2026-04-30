@@ -13,6 +13,7 @@ const NAV_LINKS = [
   { href: "/", label: "my-crm" },
   { href: "/members", label: "Members" },
   { href: "/members/new", label: "Add Member" },
+  { href: "/admin", label: "Admin" },
 ];
 
 export default function Nav() {
@@ -29,11 +30,14 @@ export default function Nav() {
           // Exact match for "/" and "/members/new".
           // "/members" also activates on detail pages like "/members/123",
           // but must NOT activate on "/members/new" (that belongs to Add Member).
+          // "/admin" activates on /admin and all /admin/... sub-pages.
           const isActive =
             href === "/members"
               ? pathname === "/members" ||
                 (pathname.startsWith("/members/") &&
                   pathname !== "/members/new")
+              : href === "/admin"
+              ? pathname === "/admin" || pathname.startsWith("/admin/")
               : pathname === href;
 
           return (

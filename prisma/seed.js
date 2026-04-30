@@ -20,7 +20,6 @@ async function main() {
       earnRate: 2.0,
       tierSilver: 300,
       tierGold: 1000,
-      tierPlatinum: 3000,
       expiryDays: 365,
       pointsToRedeem: 200
     }

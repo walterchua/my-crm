@@ -23,7 +23,6 @@ model ClientConfig {
   earnRate       Float  @default(1.0)
   tierSilver     Int    @default(500)
   tierGold       Int    @default(2000)
-  tierPlatinum   Int    @default(5000)
   expiryDays     Int    @default(365)
   pointsToRedeem Int    @default(500)
   client         Client @relation(fields: [clientId], references: [id])
