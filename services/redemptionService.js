@@ -112,11 +112,12 @@ export async function redeemPoints({ memberId, clientId }) {
       },
     }),
 
-    // Write 2: issue the voucher to the member
-    // Schema note: Voucher does not have a clientId column — omitted intentionally.
-    // A unique code is generated per voucher; expiry is calculated above.
+    // Write 2: issue the voucher to the member.
+    // clientId stored directly so voucher counts can be queried per client
+    // without joining through Member.
     prisma.voucher.create({
       data: {
+        clientId,
         memberId,
         code:       randomUUID(),
         value:      VOUCHER_VALUE,
@@ -124,11 +125,13 @@ export async function redeemPoints({ memberId, clientId }) {
       },
     }),
 
-    // Write 3: immutable audit record of this redemption event
-    // Schema note: Transaction does not have a clientId column — omitted intentionally.
+    // Write 3: immutable audit record of this redemption event.
+    // clientId stored directly so transaction history can be queried
+    // per client without joining through Member.
     // pointsChanged stores the positive amount deducted (consistent with earn convention).
     prisma.transaction.create({
       data: {
+        clientId,
         memberId,
         type:          'redeem',
         pointsBefore:  member.points,

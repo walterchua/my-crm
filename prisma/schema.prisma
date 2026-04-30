@@ -9,11 +9,15 @@ datasource db {
 
 // CLIENT — the merchant using your CRM
 model Client {
-  id        String        @id @default(cuid())
-  name      String
-  createdAt DateTime      @default(now())
-  members   Member[]
-  config    ClientConfig?
+  id           String        @id @default(cuid())
+  name         String
+  createdAt    DateTime      @default(now())
+  members      Member[]
+  config       ClientConfig?
+  // Direct relations to Transaction and Voucher allow client-scoped
+  // queries without joining through Member every time
+  transactions Transaction[]
+  vouchers     Voucher[]
 }
 
 // CLIENT CONFIG — rules per merchant, no hardcoding
@@ -49,6 +53,7 @@ model Member {
 // TRANSACTION — every earn and redeem event
 model Transaction {
   id            Int      @id @default(autoincrement())
+  clientId      String
   memberId      String
   type          String
   pointsBefore  Int
@@ -56,17 +61,20 @@ model Transaction {
   pointsChanged Int
   amount        Float    @default(0)
   createdAt     DateTime @default(now())
+  client        Client   @relation(fields: [clientId], references: [id])
   member        Member   @relation(fields: [memberId], references: [id])
 }
 
 // VOUCHER — issued to member on redemption
 model Voucher {
   id         Int      @id @default(autoincrement())
+  clientId   String
   memberId   String
   code       String   @unique
   value      Float
   status     String   @default("active")
   expiryDate DateTime
   createdAt  DateTime @default(now())
+  client     Client   @relation(fields: [clientId], references: [id])
   member     Member   @relation(fields: [memberId], references: [id])
 }

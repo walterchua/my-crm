@@ -88,11 +88,12 @@ export async function earnPoints({ memberId, clientId, spendAmount }) {
       },
     }),
 
-    // Write 2: insert an immutable audit record of this earn event
-    // pointsBefore / pointsAfter / pointsChanged match the Transaction schema
-    // amount records the original spend that triggered this earn event
+    // Write 2: insert an immutable audit record of this earn event.
+    // clientId is stored directly so transaction history can be queried
+    // per client without joining through Member.
     prisma.transaction.create({
       data: {
+        clientId,
         memberId,
         type: 'earn',
         pointsBefore: member.points,
