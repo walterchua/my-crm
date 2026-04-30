@@ -7,9 +7,8 @@ import { useClient } from "../context/ClientContext";
 // The page links shown on the left side of the nav bar
 const NAV_LINKS = [
   { href: "/", label: "my-crm" },
-  { href: "/members", label: "Members" },
-  { href: "/members/new", label: "Add Member" },
   { href: "/admin", label: "Admin" },
+  { href: "/members", label: "Members" },
 ];
 
 export default function Nav() {
