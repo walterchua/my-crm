@@ -41,14 +41,32 @@ export async function earnPoints({ memberId, clientId, spendAmount }) {
   const pointsEarned = calculatePoints(spendAmount, config.earnRate)
 
   // ─── Step 3: Load the member — scoped by both memberId AND clientId ────────
-  // Scoping by clientId is mandatory: it prevents one merchant from accidentally
-  // reading or writing another merchant's member data.
+  // WHY a single combined WHERE clause instead of two separate checks:
+  //
+  //   ✗ Unsafe two-step approach:
+  //       member = findFirst({ where: { id: memberId } })   // finds any member
+  //       if (member.clientId !== clientId) throw ...        // checked too late
+  //
+  //   The unsafe version has a window between the fetch and the check where the
+  //   wrong member is already in memory. More critically, any code path that
+  //   forgets the second check silently processes cross-tenant data.
+  //
+  //   ✓ Safe single-step approach (used here):
+  //       member = findFirst({ where: { id: memberId, clientId } })
+  //
+  //   Prisma translates this to:
+  //       SELECT * FROM "Member" WHERE id = $1 AND "clientId" = $2
+  //
+  //   If the memberId belongs to a different client, the database returns no
+  //   row — the member is never loaded at all, so no cross-tenant data ever
+  //   reaches application code. Existence and ownership are enforced together
+  //   in one atomic database operation.
   const member = await prisma.member.findFirst({
     where: { id: memberId, clientId },
   })
 
   if (!member) {
-    throw new Error('Member not found')
+    throw new Error('Member not found for this client')
   }
 
   // ─── Step 4: Compute new balance and tier ─────────────────────────────────

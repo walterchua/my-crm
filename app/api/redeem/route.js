@@ -28,10 +28,13 @@ export async function POST(request) {
 
   } catch (error) {
 
-    // ─── Known error: member not found for this client ───────────────────────
-    if (error.message === 'Member not found') {
+    // ─── Known error: memberId not found under this clientId ─────────────────
+    // Covers both "member does not exist" and "member belongs to a different
+    // client" — we intentionally return the same 404 for both so callers
+    // cannot probe which client a member belongs to.
+    if (error.message === 'Member not found for this client') {
       return Response.json(
-        { error: 'Member not found' },
+        { error: 'Member not found for this client' },
         { status: 404 }
       )
     }
