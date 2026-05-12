@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint", 
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:int": "vitest run --reporter verbose __tests__/integration",
+    "test:all": "vitest run --reporter verbose"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

@@ -176,3 +176,19 @@ can be a database insert — not a development project.
 - Never test UI styling or static content
 - Run npx vitest run before every commit
 - Current test suite: 25 tests passing across 4 files
+- Unit tests (npm test) — run in CI/CD on every push
+- Integration tests (npm run test:int) — run locally 
+  before pushing, never in CI/CD pipeline
+- Integration tests require: npm run dev running + 
+  test database accessible
+
+## Known Issues — Out of Scope for POC
+- Tier assignment uses pointsBalance not lifetimePoints
+- No tier cycle tracking or downgrade logic
+- No duplicate redemption guard
+- No promotional earn rate rules
+- pointsExpiryDate not yet wired into redemptionService
+  canRedeem called with null expiry — points never expire
+  Fix: add pointsExpiryDate to Member schema, 
+  read it in redemptionService before calling canRedeem
+- These are noted for future development
