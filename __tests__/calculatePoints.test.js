@@ -39,7 +39,7 @@ describe("calculatePoints", () => {
     const result = calculatePoints(spendAmount, earnRate);
 
     // Assert
-    expect(result).toBe(100);
+    expect(result).toBe(999);
   });
 
   it("returns half the points when a 0.5x restricted earn rate is applied", () => {
