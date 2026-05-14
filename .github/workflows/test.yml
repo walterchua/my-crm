@@ -1,0 +1,59 @@
+name: Unit Tests
+
+# Run this workflow on every push to main and on every pull request
+# that targets main. This ensures code is tested before and after merging.
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    # Use the latest Ubuntu runner — free for public repos on GitHub Actions.
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the repository code so subsequent steps can access it.
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Install Node.js 20 (matches local dev environment).
+      # The cache: 'npm' option reuses node_modules across runs when
+      # package-lock.json has not changed — speeds up the workflow significantly.
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      # Step 3: Install exact dependency versions from package-lock.json.
+      # npm ci is used instead of npm install because:
+      #   • It installs exactly what is in package-lock.json (no version drift)
+      #   • It deletes node_modules first for a clean install every time
+      #   • It is faster in CI because it skips the dependency resolution step
+      - name: Install dependencies
+        run: npm ci
+
+      # Step 4: Generate the Prisma client from the schema.
+      # This must run before tests because Prisma queries will fail at import
+      # time if the generated client does not exist.
+      # DATABASE_URL and DIRECT_URL are required by Prisma even for generate —
+      # it validates the connection string format during client generation.
+      - name: Generate Prisma client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+
+      # Step 5: Run the unit test suite (lib/ pure functions only).
+      # This runs npm test which maps to: vitest run
+      # Integration tests (npm run test:int) are intentionally excluded —
+      # they require a running dev server and are run locally before pushing.
+      - name: Run unit tests
+        run: npm test
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
