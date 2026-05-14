@@ -9,8 +9,8 @@
     "lint": "eslint", 
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:int": "vitest run --reporter verbose __tests__/integration",
-    "test:all": "vitest run --reporter verbose"
+    "test:int": "vitest run --config vitest.int.config.js",
+    "test:all": "vitest run --config vitest.all.config.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
