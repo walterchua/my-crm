@@ -1,29 +1,31 @@
 // Server Component — no "use client" needed because this page only
 // reads data and renders it. There is no useState or onClick here.
 // Next.js fetches the data on the server before sending HTML to the browser.
+
+// force-dynamic tells Next.js to re-run this page on every request
+// instead of caching the result at build time. Without this, Next.js
+// may serve a stale snapshot with no clients shown.
+export const dynamic = 'force-dynamic'
+
 import Link from 'next/link'
+import { getClients } from '../../services/clientService'
 
 // ─────────────────────────────────────────────────────────────
-// Fetch all clients from our own API.
-// We call the API route (rather than Prisma directly) so the
-// data layer goes through one path — making it easier to add
-// caching, auth middleware, or logging later.
+// WHY Server Components call services directly instead of fetch():
+//
+// fetch('/api/clients') is an HTTP request — it requires a running
+// server to receive it. In Server Components on Vercel (and during
+// next build), there is no localhost server, so relative fetch calls
+// always fail with "fetch failed".
+//
+// Server Components run as Node.js code on the server, which means
+// they can import and call service functions and Prisma queries
+// directly — no HTTP round-trip needed. This is faster, simpler,
+// and works correctly in every environment.
 // ─────────────────────────────────────────────────────────────
-async function fetchClients() {
-  // process.env.NEXT_PUBLIC_BASE_URL lets the server-side fetch
-  // know the full URL. Falls back to localhost for local dev.
-  const base = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
-  const res = await fetch(`${base}/api/clients`, {
-    // cache: 'no-store' means every page load gets fresh data
-    // instead of a cached snapshot — important for admin views.
-    cache: 'no-store',
-  })
-  if (!res.ok) return []
-  return res.json()
-}
 
 export default async function AdminDashboardPage() {
-  const clients = await fetchClients()
+  const clients = await getClients()
 
   return (
     // Page background — matches the dark theme used across the app
