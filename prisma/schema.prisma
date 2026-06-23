@@ -11,6 +11,7 @@ datasource db {
 model Client {
   id           String        @id @default(cuid())
   name         String
+  slug         String        @unique
   createdAt    DateTime      @default(now())
   members      Member[]
   config       ClientConfig?
@@ -28,8 +29,10 @@ model ClientConfig {
   tierSilver     Int    @default(500)
   tierGold       Int    @default(2000)
   expiryDays     Int    @default(365)
-  pointsToRedeem Int    @default(500)
-  client         Client @relation(fields: [clientId], references: [id])
+  pointsToRedeem Int     @default(500)
+  welcomeBonus   Int     @default(0)
+  birthdayBonus  Boolean @default(false)
+  client         Client  @relation(fields: [clientId], references: [id])
 }
 
 // MEMBER — the end customer
