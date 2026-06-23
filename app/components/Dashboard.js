@@ -23,7 +23,9 @@ export default function Dashboard() {
       setError('')
 
       try {
-        const res  = await fetch(`/api/members?clientId=${selectedClient.id}`)
+        // credentials: 'include' sends the session cookie with the request
+        // so the proxy recognises the user as authenticated and lets it through.
+        const res  = await fetch(`/api/members?clientId=${selectedClient.id}`, { credentials: 'include' })
         const data = await res.json()
 
         if (!res.ok) {

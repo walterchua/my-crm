@@ -1,132 +1,113 @@
-# my-crm Project Context
+# VIBING101 — Project Context
 
-## Who I Am
-I am a Product Owner with deep loyalty and CRM domain expertise,
-learning vibecoding (AI-assisted development) as a self-development
-initiative. I am not a developer by background.
+## Who Walter Is
+Product Owner with deep loyalty/CRM domain expertise learning vibecoding
+as self-development. Not a developer by background. Always explain what
+you are building and why before writing code. Use simple language.
+Comment every section of code generated. Tell me when there are multiple
+approaches and recommend one. Flag anything that could be a security concern.
 
-Please always:
-- Explain what you are building and why before writing code
-- Use simple language and avoid unexplained jargon
-- Tell me when there are multiple approaches and recommend one
-- Flag anything that could be a security concern
-- Comment every section of generated code
+## The Learning Project
+Multi-client CRM loyalty platform — my-crm
+Location: C:\Projects\my-crm
+GitHub: github.com/walterchua/my-crm
+Database: Supabase PostgreSQL (Singapore region, project mykxhdflzjutsxuhrbga)
 
-## What We Are Building
-A multi-client CRM loyalty platform as a learning project.
-The system manages members, points, tiers, vouchers, and
-transactions across multiple independent merchant clients.
+## Tech Stack
+Next.js 16 (App Router, JavaScript not TypeScript) · Prisma 5.22.0 ·
+Supabase · Tailwind CSS · Vitest · Vercel · GitHub Actions
 
-Designed with production architecture patterns from the start.
-This is a POC to demonstrate that new merchant onboarding
-can be a database insert — not a development project.
+## Current Phase
+Phase 6 — Production Hardening (Week 18 of 20)
 
-## Tech Stack — Always Use These
-- Framework: Next.js 16 (App Router, JavaScript not TypeScript)
-- Database: Supabase (PostgreSQL, Singapore region)
-- ORM: Prisma 5.22.0
-- Styling: Tailwind CSS
-- Testing: Vitest
-- Deployment: Vercel
-- Version Control: GitHub
+## Completed Builds
+- Build 1  — Nav, members page, registration form, member detail, unit tests
+- Build 2  — Earn points API (POST /api/transactions)
+- Build 3  — Redemption flow (POST /api/redemptions, voucher creation)
+- Build 4  — Admin UI + client config editor
+- Build 5  — Full Vitest test suite (25 tests: earn, redeem, enroll, tier)
+- Build 6  — GitHub Actions CI pipeline (runs on every push to main)
+- Build 7  — Vercel deployment (auto-deploy on push to main)
+- Build 8  — Onboarding engine (POST /api/onboarding/import)
+- Build 10 — Authentication + full app protection + health check banner
 
-## Project Location
-- Local: C:\Projects\my-crm
-- GitHub: github.com/walterchua/my-crm
-- Database: Supabase project mykxhdflzjutsxuhrbga
+## Remaining Builds
+- Build 11 — DB indexes, Sentry error tracking
+- Build 12 — Final POC demo
 
-## Database Schema
-- Schema file: prisma/schema.prisma
-- Always read this file before writing any Prisma queries
-- 5 models: Client, ClientConfig, Member, Transaction, Voucher
-- Every query must be scoped by clientId — never unscoped
+## Database Schema — 6 Tables
+Client, ClientConfig, Member, Transaction, Voucher, User
 
 ## Schema Rules
-- Every table that belongs to a client MUST have
-  clientId as a direct field — no exceptions
+- Every table belonging to a client MUST have clientId as a direct field
 - Never rely on joins through memberId to infer clientId
-- clientId must be present on: Member, Transaction,
-  Voucher, and any future tables created
-- This enables direct client-scoped queries without joins
-- All queries on these tables must include clientId
-  in the WHERE clause (Architecture Rule #1)
 - Member email uniqueness is per client: @@unique([clientId, email])
 - IDs use cuid() strings — never auto-increment integers
+- After any schema change: npx prisma migrate dev → npx prisma generate → restart npm run dev
 
-## After Any Schema Change — Always Run
-1. npx prisma migrate dev
-2. npx prisma generate
-3. Restart npm run dev
-
-## Seed Data
-- Demo client: Demo Coffee Shop (cuid string ID — read from DB)
-- Members: Walter Yu (Gold, 1400pts), John Tan (Silver, 320pts)
-- Never hardcode clientId — always read from database
-
-## Architecture Rules — Always Follow These
-1. Every database query MUST be scoped by clientId
+## Architecture Rules — Always Follow
+1. Every query scoped by clientId — never unscoped Prisma queries
    - Never: prisma.member.findMany()
    - Always: prisma.member.findMany({ where: { clientId } })
-   - Member fetch must scope by BOTH memberId AND clientId:
-     prisma.member.findFirst({ where: { id: memberId, clientId } })
-
-2. Configuration-first design
+2. Configuration-first — rules in ClientConfig, never hardcoded
    - Business rules (earn rates, tier thresholds) live in ClientConfig
-   - Never hardcode business rule values in application code
    - Current scope: Bronze/Silver/Gold tiers only — no Platinum
-
-3. Server Components by default
-   - Use "use client" only when useState or interactivity is needed
-   - Keep data fetching in Server Components
-
-4. API routes for all data mutations
-   - All POST, PUT, DELETE operations go through /api/ routes
-   - Never mutate data directly from a Server Component
-
-5. Database transactions for multi-step operations
-   - Earn points + log transaction = one atomic $transaction
-   - Redeem + voucher + log transaction = one atomic $transaction
-   - Creating client + config = sequential $transaction
-     (client first, then config using the new client.id)
-
-6. Always validate on the API side
-   - Never trust frontend validation alone — both layers required
+3. Server Components by default — "use client" only when useState or
+   interactivity is needed
+4. API routes for all mutations — POST PUT DELETE through /api/
+5. DB transactions for multi-step operations — prisma.$transaction()
+6. Always validate on API side — never trust frontend alone
    - Validate at UI for speed, validate at API for safety
-   - Use res.ok to detect errors, not just catch block
 
-## Layer Architecture — Always Follow
+## Layer Architecture
 - Route layer: HTTP only — validate inputs, call service, return response
 - Service layer: Business logic — reads ClientConfig, calls lib, runs DB ops
 - Lib layer: Pure functions — no DB, no API (calculatePoints, canRedeem, assignTier)
 - Database layer: Prisma queries — always scoped by clientId
 
-## File Structure
-- app/api/ → API routes (route.js files)
-- app/admin/ → Admin UI pages
-- app/components/ → Reusable UI components
-- app/context/ → React Context (ClientContext.js)
-- services/ → Business logic services
-- lib/ → Pure logic functions
-- __tests__/ → Vitest unit tests
+## Authentication
+- NextAuth with CredentialsProvider
+- JWT session strategy, 8 hour expiry
+- User table in database with bcrypt hashed passwords
+- All routes protected by proxy.js middleware (Next.js 16 convention)
+- Public routes: /login, /api/auth/*, /api/health only
+- Client-side fetches must include: { credentials: 'include' }
+- useEffect data fetches must wait for status === 'authenticated'
 
-## Points Engine — Current Scope
-- calculatePoints(spendAmount, earnRate) — in lib/
-- canRedeem(memberPoints, requiredPoints, expiryDate) — in lib/
-- assignTier(points, tierSilver, tierGold) — in lib/
-- earnRate comes from ClientConfig — never hardcoded
-- Tier assignment: Bronze/Silver/Gold based on points balance
-- No promotional rules, time windows, or multipliers yet
+## File Structure
+- app/api/          → API routes (route.js files)
+- app/admin/        → Admin UI pages
+- app/login/        → Login page
+- app/components/   → Reusable UI components (Nav.js, NavWrapper.js)
+- app/context/      → React Context (ClientContext.js)
+- services/         → Business logic services (onboardingService.js etc)
+- lib/              → Pure logic functions
+- __tests__/        → Vitest unit and integration tests
+- prisma/           → Schema and migrations
+- proxy.js          → Next.js 16 middleware (route protection)
+
+## Key API Endpoints
+GET  /api/clients
+GET  /api/members?clientId=
+POST /api/members
+POST /api/transactions
+POST /api/redemptions
+POST /api/onboarding/import
+GET  /api/health
+POST /api/auth/register    ← first user only, returns 403 if user exists
+POST /api/auth/[...nextauth]
 
 ## API Response Conventions
 - GET success → 200
 - POST that creates → 201
-- PUT/PATCH success → 200
-- DELETE success → 204
 - Validation failure → 400
 - Duplicate record → 409
 - Not found → 404
+- Unauthorized → 401
+- Forbidden → 403
 - Unexpected error → 500
-- Never return 200 for a POST that creates — always 201
+- Errors always return: { error: "human readable message" }
+- Never return raw Prisma errors to the user
 
 ## Prisma Error Handling
 - P2002 unique constraint → 409
@@ -134,15 +115,23 @@ can be a database insert — not a development project.
 - P2003 foreign key fail → 400
 - Unknown Prisma error → 500
 
-## API Response Shape
-- Errors always return: { error: "human readable message" }
-- Success always returns the created/updated record
-- Never return raw Prisma errors to the user
-- Always console.error the real error before returning 500
+## Points Engine — Current Scope
+- calculatePoints(spendAmount, earnRate) — in lib/
+- canRedeem(memberPoints, requiredPoints, expiryDate) — in lib/
+- assignTier(points, tierSilver, tierGold) — in lib/
+- earnRate comes from ClientConfig — never hardcoded
+- Tier: Bronze/Silver/Gold based on points balance
+
+## Testing Rules
+- Pure logic functions in lib/ must have unit tests
+- Tests follow Arrange-Act-Assert pattern
+- Always test: happy path, boundary condition, error case
+- Run npx vitest run before every commit
+- Unit tests (npm test) — run in CI/CD on every push
+- Integration tests (npm run test:int) — run locally before pushing
 
 ## File Conventions
-- All files use .js not .tsx or .ts
-- No TypeScript — JavaScript only throughout
+- All files use .js not .tsx or .ts — JavaScript only
 - Components go in app/components/
 - Pure logic functions go in lib/
 - Tests go in __tests__/ and end in .test.js
@@ -150,45 +139,20 @@ can be a database insert — not a development project.
 ## Styling Rules
 - Tailwind CSS only — no inline styles, no CSS modules
 - Dark theme throughout — bg-gray-900 surface, bg-gray-950 background
-- No external component libraries — Tailwind only
-
-## Routing Conventions
-- / → Dashboard (client-aware via ClientContext)
-- /members → Members list
-- /members/[id] → Member detail
-- /members/new → Registration form
-- /admin → Admin dashboard (all clients)
-- /admin/clients/new → Create client
-- /admin/clients/[id] → Client detail
-- /admin/clients/[id]/config → Config editor
-- /api/members → GET all, POST create
-- /api/members/[id] → GET one
-- /api/transactions → POST earn points
-- /api/redeem → POST redeem voucher
-- /api/clients → GET all, POST create
-- /api/clients/[id] → GET one
-- /api/clients/[id]/config → PUT update config
-
-## Testing Rules
-- Pure logic functions in lib/ must have unit tests
-- Tests follow Arrange-Act-Assert pattern
-- Always test: happy path, boundary condition, error case
-- Never test UI styling or static content
-- Run npx vitest run before every commit
-- Current test suite: 25 tests passing across 4 files
-- Unit tests (npm test) — run in CI/CD on every push
-- Integration tests (npm run test:int) — run locally 
-  before pushing, never in CI/CD pipeline
-- Integration tests require: npm run dev running + 
-  test database accessible
+- No external component libraries
 
 ## Known Issues — Out of Scope for POC
 - Tier assignment uses pointsBalance not lifetimePoints
 - No tier cycle tracking or downgrade logic
 - No duplicate redemption guard
-- No promotional earn rate rules
 - pointsExpiryDate not yet wired into redemptionService
-  canRedeem called with null expiry — points never expire
-  Fix: add pointsExpiryDate to Member schema, 
-  read it in redemptionService before calling canRedeem
-- These are noted for future development
+- No rate limiting yet (post-POC)
+- No Supabase row-level security yet (post-POC)
+
+## Business Context
+Walter's company runs a loyalty SaaS powering hundreds of retail and F&B
+merchants. Current monolith is unmaintainable — 3 month delivery timelines
+losing deals at presales. This project is a POC for the company rebuild.
+Configuration-first design solves the delivery problem — new merchant
+onboarding becomes a database insert, not a development project.
+Target demo: new client live in under 30 minutes, zero code changes.

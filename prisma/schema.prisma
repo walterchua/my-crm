@@ -68,6 +68,17 @@ model Transaction {
   member        Member   @relation(fields: [memberId], references: [id])
 }
 
+// USER — admin accounts that can log in to the platform
+// Passwords are stored as bcrypt hashes — never plain text
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+}
+
 // VOUCHER — issued to member on redemption
 model Voucher {
   id         Int      @id @default(autoincrement())

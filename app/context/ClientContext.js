@@ -3,6 +3,9 @@
 // Context must be "use client" because createContext and useContext
 // are React browser APIs — they have no meaning on the server.
 import { createContext, useContext, useState, useEffect } from 'react'
+// useSession lets us read the current auth status so we only fetch
+// /api/clients once the session is confirmed as authenticated.
+import { useSession } from 'next-auth/react'
 
 // ─────────────────────────────────────────────────────────────
 // The Context object
@@ -29,12 +32,26 @@ export function ClientProvider({ children }) {
   const [clients,        setClients]        = useState([])
   const [selectedClient, setSelectedClient] = useState(null)
 
-  // Fetch all clients once when the app first loads.
-  // useEffect with [] runs exactly once after the first render.
+  // status is 'loading' | 'authenticated' | 'unauthenticated'.
+  // We read it here so the fetch only fires once the session is confirmed.
+  // Previously the useEffect had [] and ran at mount time when status was
+  // still 'loading' — in Next.js 16 that race condition silently prevented
+  // the /api/clients request from ever reaching the network.
+  const { status } = useSession()
+
+  // Re-run whenever status changes.
+  // - 'loading'         → do nothing, NextAuth is still reading the cookie
+  // - 'authenticated'   → session confirmed, safe to fetch the clients list
+  // - 'unauthenticated' → no session, proxy.js will redirect to /login anyway
   useEffect(() => {
+    if (status !== 'authenticated') return
+
     async function loadClients() {
       try {
-        const res  = await fetch('/api/clients')
+        // credentials: 'include' tells the browser to attach the session
+        // cookie to this request. Without it, the proxy sees no token and
+        // redirects to /login instead of returning the clients list.
+        const res  = await fetch('/api/clients', { credentials: 'include' })
         const data = await res.json()
 
         if (!res.ok || !Array.isArray(data)) return
@@ -51,7 +68,7 @@ export function ClientProvider({ children }) {
     }
 
     loadClients()
-  }, [])
+  }, [status])
 
   // The value object is what every useClient() call receives.
   // Wrapping in an object means we can add more fields later without

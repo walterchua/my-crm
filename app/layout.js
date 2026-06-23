@@ -1,9 +1,16 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Nav from "./components/Nav";
+// NavWrapper decides whether to render Nav based on the current route.
+// This keeps layout.js as a Server Component — the hook logic lives in
+// the wrapper rather than here or inside Nav itself.
+import NavWrapper from "./components/NavWrapper";
 // ClientProviderWrapper carries the "use client" boundary so this
 // file can remain a Server Component (required for metadata + fonts)
 import ClientProviderWrapper from "./components/ClientProviderWrapper";
+// SessionProviderWrapper makes the NextAuth session available to every
+// component in the tree via useSession(). Same "use client" wrapper pattern
+// as ClientProviderWrapper — keeps layout.js as a Server Component.
+import SessionProviderWrapper from "./components/SessionProviderWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,10 +40,15 @@ export default function RootLayout({ children }) {
       {/* ClientProviderWrapper makes the selected client available to
           every component in the tree. Nav and all pages read from it. */}
       <body className="min-h-full flex flex-col">
-        <ClientProviderWrapper>
-          <Nav />
-          {children}
-        </ClientProviderWrapper>
+        {/* SessionProviderWrapper must wrap everything so useSession() works
+            anywhere in the tree — including Nav and all page components */}
+        <SessionProviderWrapper>
+          <ClientProviderWrapper>
+            {/* NavWrapper renders <Nav /> on all routes except /login */}
+            <NavWrapper />
+            {children}
+          </ClientProviderWrapper>
+        </SessionProviderWrapper>
       </body>
     </html>
   );
