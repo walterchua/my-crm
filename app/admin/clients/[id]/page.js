@@ -1,23 +1,27 @@
-// Server Component — reads the client from the API and renders a
+// Server Component — queries the database directly and renders a
 // static detail page. No interactivity needed, so "use client" is
 // not required and we get the performance benefits of server-side rendering.
+//
+// WHY we call the service directly instead of fetch('/api/clients/[id]'):
+// Server Components run on the server and have no browser session cookie.
+// Any fetch() they make to our own API goes through proxy.js, which sees
+// no token and redirects to /login — returning HTML that crashes JSON.parse().
+// Calling the service function directly skips HTTP entirely and queries
+// the database in-process, so authentication is not involved.
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { getClient } from '../../../../services/clientService'
 
-// ─────────────────────────────────────────────────────────────
-// Fetch a single client with config and member count from our API
-// ─────────────────────────────────────────────────────────────
-async function fetchClient(id) {
-  const base = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
-  const res = await fetch(`${base}/api/clients/${id}`, { cache: 'no-store' })
-  if (res.status === 404) return null
-  if (!res.ok) throw new Error('Failed to fetch client')
-  return res.json()
-}
+// force-dynamic tells Next.js to never cache this page — each request
+// hits the database fresh so config changes are always reflected immediately.
+export const dynamic = 'force-dynamic'
 
 export default async function ClientDetailPage({ params }) {
   const { id } = await params
-  const client = await fetchClient(id)
+
+  // Query the service layer directly — no HTTP, no auth middleware involved.
+  // getClient() returns null when the id doesn't match any row.
+  const client = await getClient(id)
 
   // notFound() renders Next.js's built-in 404 page for this route
   if (!client) notFound()
