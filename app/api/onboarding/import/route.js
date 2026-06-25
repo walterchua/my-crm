@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server'
 import { importClient } from '../../../../services/onboardingService.js'
+// Sentry captures unexpected errors and sends them to the Sentry dashboard
+// with a full stack trace, so we can investigate production issues without
+// having to reproduce them locally.
+import * as Sentry from '@sentry/nextjs'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/onboarding/import
@@ -71,6 +75,13 @@ export async function POST(request) {
     // is logged server-side so we can investigate, but we never expose raw
     // error details to the caller — that could leak internal system details.
     console.error('Unexpected error in POST /api/onboarding/import:', error)
+
+    // Send the full error to Sentry so it appears in the dashboard with
+    // stack trace and context. extra.context helps filter by route in Sentry.
+    Sentry.captureException(error, {
+      extra: { context: 'POST /api/onboarding/import — create new merchant client' },
+    })
+
     return NextResponse.json(
       { error: 'Something went wrong. Please try again.' },
       { status: 500 }

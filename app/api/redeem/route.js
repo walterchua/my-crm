@@ -1,4 +1,8 @@
 import { redeemPoints } from '../../../services/redemptionService.js'
+// Sentry captures unexpected errors and sends them to the Sentry dashboard
+// with a full stack trace, so we can investigate production issues without
+// having to reproduce them locally.
+import * as Sentry from '@sentry/nextjs'
 
 // POST /api/redeem — redeem points and issue a voucher for a member
 export async function POST(request) {
@@ -61,6 +65,13 @@ export async function POST(request) {
     // Log the real error internally so we can investigate, but never expose
     // raw error details to the caller.
     console.error('Error processing redemption:', error)
+
+    // Send the full error to Sentry so it appears in the dashboard with
+    // stack trace and context. extra.context helps filter by route in Sentry.
+    Sentry.captureException(error, {
+      extra: { context: 'POST /api/redeem — redeem points and issue voucher' },
+    })
+
     return Response.json(
       { error: 'Something went wrong' },
       { status: 500 }

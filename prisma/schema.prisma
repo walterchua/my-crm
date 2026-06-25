@@ -51,6 +51,11 @@ model Member {
   // email must be unique per client, not globally —
   // the same person can be a member of multiple merchants
   @@unique([clientId, email])
+
+  // Speeds up: prisma.member.findMany({ where: { clientId } })
+  // Every member list page filters by clientId — without this index
+  // Postgres scans every row in the table as the member count grows.
+  @@index([clientId])
 }
 
 // TRANSACTION — every earn and redeem event
@@ -66,6 +71,14 @@ model Transaction {
   createdAt     DateTime @default(now())
   client        Client   @relation(fields: [clientId], references: [id])
   member        Member   @relation(fields: [memberId], references: [id])
+
+  // Speeds up: prisma.transaction.findMany({ where: { memberId } })
+  // Transaction history for a single member — common on the member detail page.
+  @@index([memberId])
+
+  // Speeds up: prisma.transaction.findMany({ where: { clientId } })
+  // Client-scoped transaction reports — required by Architecture Rule #1.
+  @@index([clientId])
 }
 
 // USER — admin accounts that can log in to the platform
@@ -91,4 +104,12 @@ model Voucher {
   createdAt  DateTime @default(now())
   client     Client   @relation(fields: [clientId], references: [id])
   member     Member   @relation(fields: [memberId], references: [id])
+
+  // Speeds up: prisma.voucher.findMany({ where: { memberId } })
+  // All vouchers issued to a specific member — shown on the member detail page.
+  @@index([memberId])
+
+  // Speeds up: prisma.voucher.findMany({ where: { clientId } })
+  // Client-scoped voucher lookups — required by Architecture Rule #1.
+  @@index([clientId])
 }
